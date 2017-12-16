@@ -15,11 +15,13 @@ class Album extends Component {
       currentSong: album.songs[0],
       currentTime: 0,
       duration: album.songs[0].duration,
+      volume: 0.75,
       isPlaying: false
     };
 
     this.audioElement = document.createElement('audio');
     this.audioElement.src = album.songs[0].audioSrc;
+    this.audioElement.volume = this.state.volume;
   }
 
   componentDidMount() {
@@ -29,21 +31,28 @@ class Album extends Component {
       },
       durationchange: e => {
         this.setState({ duration: this.audioElement.duration });
-      }
+      },
+      volumecontrol: e => {
+        this.setState({ volume: this.audioElement.volume });
+      },
+
     };
     this.audioElement.addEventListener('timeupdate', this.eventListeners.timeupdate);
     this.audioElement.addEventListener('durationchange', this.eventListeners.durationchange);
+
    }
 
    componentWillUnmount() {
      this.audioElement.src = null;
      this.audioElement.removeEventListener('timeupdate', this.eventListeners.timeupdate);
      this.audioElement.removeEventListener('durationchange', this.eventListeners.durationchange);
+
    }
 
   play() {
     this.audioElement.play();
     this.setState({ isPlaying: true });
+    this.setState({ volume: this.audioElement.volume });
   }
 
   stop() {
@@ -61,6 +70,8 @@ class Album extends Component {
     this.setState({ currentSong: song });
   }
 
+
+
   handleSongClick(song) {
     const isSameSong = this.state.currentSong === song;
     if (this.state.isPlaying && isSameSong) {
@@ -69,6 +80,24 @@ class Album extends Component {
       if (!isSameSong) { this.setSong(song); }
       this.play();
     }
+  }
+
+
+  formatTime(time) {
+    const seconds = Number.parseFloat(time);
+
+    if (Number.isNaN(seconds)) {
+             return '-:--';
+    }
+
+    const wholeSeconds = Math.floor(seconds);
+    const minutes = Math.floor(wholeSeconds / 60);
+    const remainingSeconds = wholeSeconds % 60;
+
+    const output = minutes + ":" + remainingSeconds;
+
+    return output;
+
   }
 
   handlePrevClick() {
@@ -87,11 +116,17 @@ class Album extends Component {
       this.play(newSong);
     }
 
-    handleTimeChange(e) {
+handleTimeChange(e) {
       const newTime = this.audioElement.duration * e.target.value;
       this.audioElement.currentTime = newTime;
       this.setState({ currentTime: newTime });
     }
+
+handleVolumeChange(e) {
+         const newVolume = 1 * e.target.value;
+         this.audioElement.volume = newVolume;
+         this.setState({ volume: newVolume });
+       }
 
    render() {
      return (
@@ -114,11 +149,13 @@ class Album extends Component {
                  {
                    this.state.album.songs.map( (song, index) =>
                     <tr className="song" key={index} onClick={() => this.handleSongClick(song)} >
-                      <button>
+                      <td>
+                        <button>
                         <span className="song-number">{index+1}</span>
                         <span className="ion-play"></span>
                         <span className="ion-pause"></span>
-                      </button>
+                        </button>
+                      </td>
                       <td className="song-title">{song.title}</td>
                       <td className="song-duration">{song.duration}</td>
                     </tr>
@@ -130,10 +167,14 @@ class Album extends Component {
            currentSong={this.state.currentSong}
            currentTime={this.audioElement.currentTime}
            duration={this.audioElement.duration}
+           //formatTime={this.audioElement.formatTime}
+           volume={this.audioElement.volume}
            handleSongClick={() => this.handleSongClick(this.state.currentSong)}
            handlePrevClick={() => this.handlePrevClick()}
            handleNextClick={() => this.handleNextClick()}
+           formatTime={(e) => this.formatTime(e)}
            handleTimeChange={(e) => this.handleTimeChange(e)}
+           handleVolumeChange={(e) => this.handleVolumeChange(e)}
          />
        </section>
      );
