@@ -1,22 +1,41 @@
 import React, { Component } from 'react';
 import albumData from './../data/albums';
 import PlayerBar from './PlayerBar';
+import './../styles/album.css';
+
+function NppDisplay(props) {
+  if (props.warn) {
+    return (
+    <a className="album-song-button"><span className='ion-play'></span></a>
+  )} else if (props.barn) {
+    return(
+      <a className="album-song-button"><span className='ion-pause'></span></a>
+    )
+  }
+
+  return null;
+  }
+
 
 class Album extends Component {
   constructor(props) {
     super(props);
 
+
     const album = albumData.find( album => {
       return album.slug === this.props.match.params.slug
     });
 
+
     this.state = {
       album: album,
-      currentSong: album.songs[0],
+      currentSong: null,
       currentTime: 0,
-      duration: album.songs[0].duration,
+      duration: null,
       volume: 0.75,
-      isPlaying: false
+      isPlaying: false,
+      playPause: false,
+      hoveredSong: ''
     };
 
     this.audioElement = document.createElement('audio');
@@ -70,8 +89,6 @@ class Album extends Component {
     this.setState({ currentSong: song });
   }
 
-
-
   handleSongClick(song) {
     const isSameSong = this.state.currentSong === song;
     if (this.state.isPlaying && isSameSong) {
@@ -81,7 +98,6 @@ class Album extends Component {
       this.play();
     }
   }
-
 
   formatTime(time) {
     const seconds = Number.parseFloat(time);
@@ -116,6 +132,16 @@ class Album extends Component {
       this.play(newSong);
     }
 
+  mouseOver(song) {
+      this.setState({hoveredSong: song})
+      console.log("nahg");
+  }
+
+  mouseOut() {
+    console.log("Mouse out!!!");
+    this.setState({hoveredSong: ''});
+    }
+
 handleTimeChange(e) {
       const newTime = this.audioElement.duration * e.target.value;
       this.audioElement.currentTime = newTime;
@@ -129,11 +155,14 @@ handleVolumeChange(e) {
        }
 
    render() {
+
      return (
        <section className="album">
          <section id="album-info">
+            <div className="column half">
             <img id="album-cover-art" src={this.state.album.albumCover} alt={'Album Cover'}/>
-            <div className="album-details">
+            </div>
+            <div className="album-details column half">
               <h1 id="album-title">{this.state.album.title}</h1>
               <h2 className="artist">{this.state.album.artist}</h2>
               <div id="release-info">{this.state.album.releaseInfo}</div>
@@ -147,13 +176,13 @@ handleVolumeChange(e) {
              </colgroup>
              <tbody>
                  {
-                   this.state.album.songs.map( (song, index) =>
-                    <tr className="song" key={index} onClick={() => this.handleSongClick(song)} >
+                   this.state.album.songs.map( (song, index,) =>
+                    <tr className="song"  onMouseOver={() => this.mouseOver(song)} onMouseOut={() => this.mouseOut()} key={index} onClick={() => this.handleSongClick(song)} >
                       <td>
                         <button>
-                        <span className="song-number">{index+1}</span>
-                        <span className="ion-play"></span>
-                        <span className="ion-pause"></span>
+                          <span className="song-number" >{this.state.currentSong !== song && song !== this.state.hoveredSong ? index+1 : ''}</span>
+                          <NppDisplay warn={(song === this.state.hoveredSong && song !== this.state.currentSong) || (song === this.state.currentSong && !this.state.isPlaying)} barn={this.state.currentSong === song && this.state.isPlaying}/>
+
                         </button>
                       </td>
                       <td className="song-title">{song.title}</td>
